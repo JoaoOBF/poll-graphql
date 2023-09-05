@@ -1,0 +1,71 @@
+org: joaoobf
+app: projeto-aula-back-end
+service: projeto-aula-back-end
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  environment:
+    ENQUETE_TABLE: Enquete
+    LOCALSTACK_HOST: ${env:LOCALSTACK_HOST, "localhost"}
+    DYNAMODB_PORT: ${env:DYNAMODB_PORT, "4566"}
+    
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:Scan
+        - dynamodb:Query
+        - dynamodb:DescribeTable
+      Resource:
+        - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.ENQUETE_TABLE}"
+
+package:
+  excludeDevDependencies: true
+  individually: true  
+
+plugins:
+  - serverless-dynamodb-local
+  - serverless-offline  
+
+functions:
+  graphql:
+    handler: src/server.graphqlHandler 
+    events:
+      - httpApi:
+          path: graphql
+          method: any
+
+custom:
+  dynamodb:
+    stages:
+      - ${sls:stage}
+    start:
+      host: ${self:provider.environment.LOCALSTACK_HOST}
+      port: ${self:provider.environment.DYNAMODB_PORT}
+      migrate: true
+      noStart: true
+      seed: true
+    seed:
+      enquete:
+        sources:
+          - table: ${self:provider.environment.ENQUETE_TABLE}
+            sources: [ './seed/poll.json' ]
+
+resources:
+  Resources:
+    ENQUETE_TABLE:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.ENQUETE_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1

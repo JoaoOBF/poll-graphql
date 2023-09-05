@@ -1,0 +1,16 @@
+[
+    {
+        "titulo": "qual a cor mais bonita?",
+        "opcoes": [
+            "Vermelho",
+            "Azul",
+            "Verde"
+        ],
+        "votos": [
+            0,
+            0,
+            0
+        ],
+        "id": "HS7ECZ"
+    }
+]
